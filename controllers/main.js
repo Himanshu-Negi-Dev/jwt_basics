@@ -1,9 +1,23 @@
-const login = (req, res) =>{
-  res.send('hello from controller')
-}
+const jwt = require('jsonwebtoken');
+const { CustomAPIError } = require("../errors/CustomAPIError");
+const { asyncWrapper } = require("../middleware/async");
 
-const dashboardController = (req, res)=>{
-  res.send('hello from dashboard')
-}
+const login = asyncWrapper((req, res) => {
+  const { username, password } = req.body;
 
-module.exports = {login, dashboardController}
+  if (!username || !password) {
+    throw new CustomAPIError('Invalid Credentials', 400);
+  }
+  const id = new Date().getDate();
+
+  const token = jwt.sign({ id, username }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+  return res.status(200).json({ msg: ' login success', token });
+
+});
+
+const dashboardController = asyncWrapper((req, res) => {
+  res.status(200).json({ data: `hi ${req.user.username}` })
+});
+
+module.exports = { login, dashboardController }
